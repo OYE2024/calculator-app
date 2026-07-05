@@ -1,1 +1,1 @@
-web: gunicorn --workers 3 --threads 2 --worker-class gthread app:app
+web: gunicorn --workers 1 --worker-class sync --timeout 30 app:app
