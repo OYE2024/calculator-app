@@ -1,7 +1,7 @@
-"""
-Online Calculator Application - AWS Infrastructure as Code
-Terraform Configuration for Elastic Beanstalk Deployment
-"""
+# ============================================================================
+# Online Calculator Application - AWS Infrastructure as Code
+# Terraform Configuration for Elastic Beanstalk Deployment
+# ============================================================================
 
 terraform {
   required_version = ">= 1.0"
@@ -21,7 +21,6 @@ provider "aws" {
       Project     = var.project_name
       Environment = var.environment
       ManagedBy   = "Terraform"
-      CreatedAt   = timestamp()
     }
   }
 }
@@ -326,7 +325,7 @@ resource "aws_db_instance" "main" {
   backup_window           = "03:00-04:00"
   maintenance_window      = "sun:04:00-sun:05:00"
   storage_encrypted       = true
-  enable_cloudwatch_logs_exports = ["postgresql"]
+  enabled_cloudwatch_logs_exports = ["postgresql"]
 
   tags = {
     Name = "${var.project_name}-db"
@@ -358,7 +357,7 @@ resource "aws_db_parameter_group" "main" {
 # ============================================================================
 
 # EB Application
-resource "aws_elastic_beanstalk_app" "main" {
+resource "aws_elastic_beanstalk_application" "main" {
   name = var.project_name
 
   tags = {
@@ -369,34 +368,48 @@ resource "aws_elastic_beanstalk_app" "main" {
 # EB Environment
 resource "aws_elastic_beanstalk_environment" "main" {
   name                = "${var.project_name}-${var.environment}"
-  application         = aws_elastic_beanstalk_app.main.name
+  application         = aws_elastic_beanstalk_application.main.name
   solution_stack_name = var.eb_solution_stack
   tier                = "WebServer"
-  instance_type       = var.eb_instance_type
-  auto_scaling_min    = var.eb_min_instances
-  auto_scaling_max    = var.eb_max_instances
+
+  # Instance Type Configuration
+  setting {
+    namespace = "aws:ec2:instances"
+    name      = "InstanceType"
+    value     = var.eb_instance_type
+  }
 
   # VPC Configuration
-  vpc_id = aws_vpc.main.id
-
-  subnets {
-    id = aws_subnet.private_1.id
+  setting {
+    namespace = "aws:ec2:vpc"
+    name      = "VPCId"
+    value     = aws_vpc.main.id
   }
 
-  subnets {
-    id = aws_subnet.private_2.id
+  setting {
+    namespace = "aws:ec2:vpc"
+    name      = "Subnets"
+    value     = "${aws_subnet.private_1.id},${aws_subnet.private_2.id}"
   }
 
-  elb_subnets {
-    id = aws_subnet.public_1.id
+  setting {
+    namespace = "aws:ec2:vpc"
+    name      = "ELBSubnets"
+    value     = "${aws_subnet.public_1.id},${aws_subnet.public_2.id}"
   }
 
-  elb_subnets {
-    id = aws_subnet.public_2.id
+  setting {
+    namespace = "aws:ec2:vpc"
+    name      = "AssociatePublicIpAddress"
+    value     = "false"
   }
 
   # Security Groups
-  instances_security_group_id = aws_security_group.app.id
+  setting {
+    namespace = "aws:ec2:instances"
+    name      = "SecurityGroups"
+    value     = aws_security_group.app.id
+  }
 
   # Environment Variables
   setting {
@@ -408,7 +421,7 @@ resource "aws_elastic_beanstalk_environment" "main" {
   setting {
     namespace = "aws:elasticbeanstalk:application:environment"
     name      = "RDS_PORT"
-    value     = aws_db_instance.main.port
+    value     = tostring(aws_db_instance.main.port)
   }
 
   setting {
@@ -427,7 +440,6 @@ resource "aws_elastic_beanstalk_environment" "main" {
     namespace = "aws:elasticbeanstalk:application:environment"
     name      = "RDS_PASSWORD"
     value     = var.db_password
-    resource  = ""
   }
 
   setting {
@@ -444,12 +456,6 @@ resource "aws_elastic_beanstalk_environment" "main" {
   }
 
   setting {
-    namespace = "aws:elasticbeanstalk:healthreporting:system"
-    name      = "EnhancedHealthAuthEnabled"
-    value     = "true"
-  }
-
-  setting {
     namespace = "aws:elasticbeanstalk:environment:process:default"
     name      = "HealthCheckPath"
     value     = "/health"
@@ -459,13 +465,13 @@ resource "aws_elastic_beanstalk_environment" "main" {
   setting {
     namespace = "aws:autoscaling:asg"
     name      = "MinSize"
-    value     = var.eb_min_instances
+    value     = tostring(var.eb_min_instances)
   }
 
   setting {
     namespace = "aws:autoscaling:asg"
     name      = "MaxSize"
-    value     = var.eb_max_instances
+    value     = tostring(var.eb_max_instances)
   }
 
   setting {

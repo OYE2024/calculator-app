@@ -2,7 +2,7 @@
 # AWS CONFIGURATION
 # ============================================================================
 
-aws_region = "us-east-1"
+aws_region = "eu-west-1"
 
 # ============================================================================
 # PROJECT CONFIGURATION
@@ -26,7 +26,7 @@ private_subnet_2_cidr = "10.0.11.0/24"
 # ============================================================================
 
 # PostgreSQL Version
-postgres_version       = "15.3"
+postgres_version       = "15"
 postgres_major_version = "15"
 
 # Instance Settings
@@ -35,7 +35,7 @@ db_allocated_storage = 20                # Minimum 20 GB
 
 # Database Credentials
 db_name     = "calculator_db"
-db_username = "admin"
+db_username = "dbadmin"
 db_password = "qwerty123!"         
 
 # Backup and HA Configuration

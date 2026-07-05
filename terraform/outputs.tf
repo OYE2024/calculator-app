@@ -92,7 +92,7 @@ output "rds_resource_id" {
 
 output "eb_application_name" {
   description = "Elastic Beanstalk application name"
-  value       = aws_elastic_beanstalk_app.main.name
+  value       = aws_elastic_beanstalk_application.main.name
 }
 
 output "eb_environment_name" {
@@ -167,7 +167,7 @@ output "next_steps" {
 
     3. Deploy your application:
        cd <project_directory>
-       eb init -p python-3.11 ${aws_elastic_beanstalk_app.main.name} -r ${var.aws_region}
+       eb init -p python-3.11 ${aws_elastic_beanstalk_application.main.name} -r ${var.aws_region}
        eb use ${aws_elastic_beanstalk_environment.main.name}
        eb deploy
 
