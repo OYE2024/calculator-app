@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    container_name: calculator_db
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: postgres_password
+      POSTGRES_DB: calculator_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - calculator_network
+
+  # Flask Application
+  app:
+    build: .
+    container_name: calculator_app
+    environment:
+      FLASK_APP: app.py
+      FLASK_ENV: production
+      RDS_HOSTNAME: db
+      RDS_PORT: 5432
+      RDS_DB_NAME: calculator_db
+      RDS_USERNAME: admin
+      RDS_PASSWORD: postgres_password
+    ports:
+      - "5000:5000"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - .:/app
+    networks:
+      - calculator_network
+    command: python -m flask run --host=0.0.0.0 --port=5000
+
+volumes:
+  postgres_data:
+
+networks:
+  calculator_network:
+    driver: bridge

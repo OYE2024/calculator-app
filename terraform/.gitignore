@@ -1,0 +1,22 @@
+# Terraform files
+*.tfstate
+*.tfstate.*
+*.tfvars                    # ⚠️ DO NOT COMMIT - contains sensitive data (passwords, keys)
+terraform.tfvars            # ⚠️ Explicit: local configuration with secrets
+.terraform/
+.terraform.lock.hcl
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# IDE
+.idea/
+*.swp
+*.swo
+*~
+.vscode/
+*.sublime-project
+*.sublime-workspace

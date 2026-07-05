@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Online Calculator - AWS Powered</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .calculator-box {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .calculator-box h1 {
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+            font-size: 28px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 10px;
+            color: #555;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-calculate {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            grid-column: 1 / 3;
+        }
+
+        .btn-calculate:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-calculate:active {
+            transform: translateY(0);
+        }
+
+        .btn-clear {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-clear:hover {
+            background: #e0e0e0;
+        }
+
+        .result-box {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+            min-height: 80px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .result-box p {
+            color: #999;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .result-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .error-message {
+            color: #e74c3c;
+            font-size: 14px;
+            padding: 10px;
+            background: #ffebee;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .success-message {
+            color: #27ae60;
+            font-size: 14px;
+            padding: 10px;
+            background: #eafaf1;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .history-box {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .history-box h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-card .label {
+            font-size: 12px;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+
+        .stat-card .value {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .history-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #f0f0f0;
+            background: #f9f9f9;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            transition: all 0.3s;
+        }
+
+        .history-item:hover {
+            background: #f0f0f0;
+        }
+
+        .history-content {
+            flex: 1;
+        }
+
+        .history-expression {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .history-result {
+            color: #667eea;
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .history-time {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .history-delete {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+
+        .history-delete:hover {
+            background: #c0392b;
+        }
+
+        .empty-history {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #999;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .footer {
+            grid-column: 1 / -1;
+            text-align: center;
+            color: white;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+
+        .footer a {
+            color: #b3d9ff;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Calculator Section -->
+        <div class="calculator-box">
+            <h1>🧮 Calculator</h1>
+
+            <div class="error-message" id="errorMessage"></div>
+            <div class="success-message" id="successMessage"></div>
+
+            <div class="input-group">
+                <label for="expression">Mathematical Expression</label>
+                <input
+                    type="text"
+                    id="expression"
+                    placeholder="e.g., 10 + 5 * 2"
+                    autocomplete="off"
+                >
+            </div>
+
+            <div class="button-group">
+                <button class="btn-clear" onclick="clearInput()">Clear</button>
+                <button class="btn-clear" onclick="deleteLastChar()">Delete</button>
+            </div>
+
+            <button class="btn-calculate" onclick="calculate()">Calculate</button>
+
+            <div class="result-box">
+                <p>Result</p>
+                <div class="result-value" id="result">-</div>
+            </div>
+        </div>
+
+        <!-- History Section -->
+        <div class="history-box">
+            <h2>📊 History & Statistics</h2>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="label">Total Calculations</div>
+                    <div class="value" id="statTotal">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Average Result</div>
+                    <div class="value" id="statAverage">0</div>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="label">Min Result</div>
+                    <div class="value" id="statMin">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Max Result</div>
+                    <div class="value" id="statMax">-</div>
+                </div>
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Loading...</p>
+            </div>
+
+            <div class="history-list" id="historyList">
+                <div class="empty-history">No calculations yet</div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>🚀 Powered by AWS | Python Flask | PostgreSQL Database</p>
+            <p>Deployed on <a href="https://aws.amazon.com/elasticbeanstalk/">AWS Elastic Beanstalk</a></p>
+        </div>
+    </div>
+
+    <script>
+        // Get expression input
+        const expressionInput = document.getElementById('expression');
+
+        // Allow Enter key to calculate
+        expressionInput.addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                calculate();
+            }
+        });
+
+        // Clear input
+        function clearInput() {
+            expressionInput.value = '';
+            document.getElementById('result').textContent = '-';
+            hideMessages();
+        }
+
+        // Delete last character
+        function deleteLastChar() {
+            expressionInput.value = expressionInput.value.slice(0, -1);
+        }
+
+        // Calculate
+        async function calculate() {
+            const expression = expressionInput.value.trim();
+
+            if (!expression) {
+                showError('Please enter an expression');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/calculate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ expression: expression })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    showError(data.error || 'Calculation failed');
+                    return;
+                }
+
+                document.getElementById('result').textContent = data.result;
+                showSuccess('Calculation saved!');
+                loadHistory();
+                expressionInput.value = '';
+
+            } catch (error) {
+                showError('Error: ' + error.message);
+            }
+        }
+
+        // Load history
+        async function loadHistory() {
+            try {
+                const response = await fetch('/api/history?limit=10');
+                const calculations = await response.json();
+
+                const historyList = document.getElementById('historyList');
+                historyList.innerHTML = '';
+
+                if (calculations.length === 0) {
+                    historyList.innerHTML = '<div class="empty-history">No calculations yet</div>';
+                    return;
+                }
+
+                calculations.forEach(calc => {
+                    const date = new Date(calc.timestamp);
+                    const timeStr = date.toLocaleTimeString();
+                    const dateStr = date.toLocaleDateString();
+
+                    const item = document.createElement('div');
+                    item.className = 'history-item';
+                    item.innerHTML = `
+                        <div class="history-content">
+                            <div class="history-expression">${escapeHtml(calc.expression)}</div>
+                            <div class="history-result">= ${calc.result}</div>
+                            <div class="history-time">${dateStr} ${timeStr}</div>
+                        </div>
+                        <button class="history-delete" onclick="deleteCalculation(${calc.id})">Delete</button>
+                    `;
+                    historyList.appendChild(item);
+                });
+
+            } catch (error) {
+                console.error('Error loading history:', error);
+            }
+        }
+
+        // Load statistics
+        async function loadStatistics() {
+            try {
+                const response = await fetch('/api/statistics');
+                const stats = await response.json();
+
+                document.getElementById('statTotal').textContent = stats.total_calculations;
+                document.getElementById('statAverage').textContent = stats.average_result.toFixed(2);
+                document.getElementById('statMin').textContent = stats.min_result !== null ? stats.min_result.toFixed(2) : '-';
+                document.getElementById('statMax').textContent = stats.max_result !== null ? stats.max_result.toFixed(2) : '-';
+
+            } catch (error) {
+                console.error('Error loading statistics:', error);
+            }
+        }
+
+        // Delete calculation
+        async function deleteCalculation(id) {
+            if (!confirm('Are you sure you want to delete this calculation?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/history/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) {
+                    showError('Failed to delete calculation');
+                    return;
+                }
+
+                loadHistory();
+                loadStatistics();
+
+            } catch (error) {
+                showError('Error: ' + error.message);
+            }
+        }
+
+        // Show error message
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // Show success message
+        function showSuccess(message) {
+            const successDiv = document.getElementById('successMessage');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+            setTimeout(() => {
+                successDiv.style.display = 'none';
+            }, 3000);
+        }
+
+        // Hide messages
+        function hideMessages() {
+            document.getElementById('errorMessage').style.display = 'none';
+            document.getElementById('successMessage').style.display = 'none';
+        }
+
+        // Escape HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Load data on page load
+        window.addEventListener('load', () => {
+            loadHistory();
+            loadStatistics();
+        });
+
+        // Refresh data every 30 seconds
+        setInterval(() => {
+            loadHistory();
+            loadStatistics();
+        }, 30000);
+    </script>
+</body>
+</html>
